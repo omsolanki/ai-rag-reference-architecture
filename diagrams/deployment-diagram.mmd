@@ -1,0 +1,57 @@
+%% Deployment Diagram — Multi-Environment Topology
+
+flowchart TB
+    subgraph local["Local Development (Docker Compose)"]
+        L_API["API Container"]
+        L_Qdrant["Qdrant Container"]
+        L_PG["PostgreSQL Container"]
+        L_Prom["Prometheus<br/>(optional profile)"]
+
+        L_API --> L_Qdrant
+        L_API --> L_PG
+        L_Prom -.-> L_API
+    end
+
+    subgraph aws["AWS ECS / Fargate"]
+        ALB["Application<br/>Load Balancer"]
+        ECS_API["ECS Service<br/>(API Tasks)"]
+        ECS_Qdrant["Qdrant Cloud<br/>or EC2"]
+        RDS["Amazon RDS<br/>(PostgreSQL)"]
+        SM["Secrets Manager"]
+        CW["CloudWatch<br/>Logs & Metrics"]
+
+        ALB --> ECS_API
+        ECS_API --> ECS_Qdrant
+        ECS_API --> RDS
+        ECS_API --> SM
+        ECS_API --> CW
+    end
+
+    subgraph k8s["Kubernetes / EKS"]
+        Ingress["Ingress Controller"]
+        K8s_API["API Deployment<br/>(HPA enabled)"]
+        K8s_Embed["Embedding Workers<br/>(Job/CronJob)"]
+        K8s_Qdrant["Qdrant StatefulSet<br/>or Managed"]
+        K8s_PG["PostgreSQL<br/>(CloudNativePG)"]
+        OTEL["OpenTelemetry<br/>Collector"]
+        Prom["Prometheus + Grafana"]
+
+        Ingress --> K8s_API
+        K8s_API --> K8s_Qdrant
+        K8s_API --> K8s_PG
+        K8s_Embed --> K8s_Qdrant
+        K8s_API --> OTEL
+        OTEL --> Prom
+    end
+
+    subgraph external["Shared External"]
+        OpenAI["OpenAI API"]
+    end
+
+    L_API --> OpenAI
+    ECS_API --> OpenAI
+    K8s_API --> OpenAI
+
+    style local fill:#f0fdf4
+    style aws fill:#fff7ed
+    style k8s fill:#eff6ff

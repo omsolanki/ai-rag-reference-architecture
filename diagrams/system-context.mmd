@@ -1,0 +1,30 @@
+%% System Context Diagram — RAG Reference Architecture
+%% C4 Level 1: System context showing external actors and dependencies
+
+flowchart TB
+    subgraph actors["External Actors"]
+        User["Knowledge Worker<br/>(End User)"]
+        Admin["Platform Admin<br/>(Document Curator)"]
+        Evaluator["ML Engineer<br/>(Evaluation & QA)"]
+    end
+
+    subgraph system["RAG Platform"]
+        RAG["AI RAG Reference<br/>Architecture"]
+    end
+
+    subgraph external["External Systems"]
+        OpenAI["OpenAI API<br/>(LLM + Embeddings)"]
+        IdP["Identity Provider<br/>(SSO / OIDC)"]
+        SIEM["SIEM / Audit<br/>(Enterprise)"]
+    end
+
+    User -->|"Natural language queries"| RAG
+    Admin -->|"Document ingestion<br/>& metadata"| RAG
+    Evaluator -->|"Evaluation runs<br/>& scorecards"| RAG
+
+    RAG -->|"Completion & embedding<br/>requests"| OpenAI
+    RAG -.->|"Authentication<br/>(future)"| IdP
+    RAG -.->|"Audit events<br/>(future)"| SIEM
+
+    style RAG fill:#2563eb,color:#fff
+    style OpenAI fill:#10b981,color:#fff

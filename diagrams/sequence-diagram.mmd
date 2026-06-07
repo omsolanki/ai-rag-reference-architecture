@@ -1,0 +1,38 @@
+%% Sequence Diagram — End-to-End RAG Query Flow
+
+sequenceDiagram
+    autonumber
+    actor User
+    participant API as FastAPI
+    participant QP as Query Processor
+    participant Ret as Hybrid Retriever
+    participant Qdrant
+    participant RR as Re-ranker
+    participant CB as Context Builder
+    participant PM as Prompt Manager
+    participant LLM as LLM Orchestration
+    participant OAI as OpenAI
+    participant PG as PostgreSQL
+
+    User->>API: POST /query {question, filters}
+    API->>QP: Normalize & validate query
+    QP->>Ret: Build retrieval request + metadata filters
+
+    Ret->>Qdrant: Dense vector search (top-k)
+    Ret->>Qdrant: Keyword / payload filter search
+    Qdrant-->>Ret: Candidate chunks (merged)
+
+    Ret->>RR: Re-rank candidates by relevance
+    RR-->>CB: Top-N ranked chunks
+
+    CB->>CB: Assemble grounded context window
+    CB->>PM: Context + user question
+    PM->>PM: Apply system prompt template
+    PM->>LLM: Grounded prompt payload
+
+    LLM->>OAI: Chat completion request
+    OAI-->>LLM: Generated response + token usage
+    LLM-->>API: Grounded answer + citations
+
+    API->>PG: Log query, latency, cost, chunk IDs
+    API-->>User: Response with sources & metadata

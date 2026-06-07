@@ -1,0 +1,62 @@
+%% Component Diagram — RAG Platform Internal Architecture
+
+flowchart TB
+    subgraph api["API Layer (FastAPI)"]
+        IngestAPI["Ingestion<br/>Endpoint"]
+        RetrieveAPI["Retrieval<br/>Endpoint"]
+        QueryAPI["Query<br/>Endpoint"]
+        HealthAPI["Health & Metrics"]
+    end
+
+    subgraph processing["Query Processing"]
+        QueryProc["Query Processor<br/>(normalization, filters)"]
+        MetaFilter["Metadata<br/>Filter Builder"]
+    end
+
+    subgraph retrieval["Retrieval Layer"]
+        HybridRet["Hybrid Retriever<br/>(dense + keyword)"]
+        Reranker["Re-ranking<br/>Layer"]
+        ContextBuilder["Context<br/>Builder"]
+    end
+
+    subgraph ai["AI Services"]
+        EmbedSvc["Embedding<br/>Generator"]
+        LLMOrch["LLM<br/>Orchestration"]
+        PromptMgr["Prompt<br/>Manager"]
+    end
+
+    subgraph storage["Storage Layer"]
+        Qdrant[("Qdrant<br/>Vector Store")]
+        Postgres[("PostgreSQL<br/>Metadata & Audit")]
+    end
+
+    subgraph eval["Evaluation"]
+        EvalFramework["Evaluation<br/>Framework"]
+        Scorecard["Scorecard<br/>Generator"]
+    end
+
+    IngestAPI --> EmbedSvc
+    IngestAPI --> Qdrant
+    IngestAPI --> Postgres
+
+    QueryAPI --> QueryProc
+    QueryProc --> MetaFilter
+    MetaFilter --> HybridRet
+    HybridRet --> Qdrant
+    HybridRet --> Reranker
+    Reranker --> ContextBuilder
+    ContextBuilder --> PromptMgr
+    PromptMgr --> LLMOrch
+    LLMOrch --> OpenAI["OpenAI API"]
+
+    RetrieveAPI --> HybridRet
+
+    QueryAPI --> Postgres
+    EvalFramework --> Scorecard
+    EvalFramework --> Postgres
+
+    HealthAPI --> api
+
+    style Qdrant fill:#dc2626,color:#fff
+    style Postgres fill:#336791,color:#fff
+    style OpenAI fill:#10b981,color:#fff

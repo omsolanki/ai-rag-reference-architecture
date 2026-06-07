@@ -1,0 +1,57 @@
+%% Evaluation Flow — RAG Quality Assessment Pipeline
+
+flowchart LR
+    subgraph input["Test Inputs"]
+        SQ["Sample Queries<br/>(examples/sample_queries.md)"]
+        SD["Sample Documents<br/>(examples/sample_documents/)"]
+        EO["Expected Outputs<br/>(examples/expected_outputs.md)"]
+    end
+
+    subgraph pipeline["Evaluation Pipeline"]
+        Ingest["Document<br/>Ingestion"]
+        Query["Query<br/>Execution"]
+        Collect["Result<br/>Collection"]
+    end
+
+    subgraph metrics["Quality Metrics"]
+        CR["Context<br/>Relevance"]
+        AR["Answer<br/>Relevance"]
+        FA["Faithfulness"]
+        GR["Groundedness"]
+        LA["Latency"]
+        CO["Cost per<br/>Query"]
+        RA["Retrieval<br/>Accuracy"]
+    end
+
+    subgraph output["Outputs"]
+        SC["Scorecard<br/>(JSON / Markdown)"]
+        PG[("PostgreSQL<br/>evaluation_runs")]
+        Report["Evaluation<br/>Report"]
+    end
+
+    SD --> Ingest
+    SQ --> Query
+    Ingest --> Query
+    Query --> Collect
+    EO --> Collect
+
+    Collect --> CR
+    Collect --> AR
+    Collect --> FA
+    Collect --> GR
+    Collect --> LA
+    Collect --> CO
+    Collect --> RA
+
+    CR --> SC
+    AR --> SC
+    FA --> SC
+    GR --> SC
+    LA --> SC
+    CO --> SC
+    RA --> SC
+
+    SC --> PG
+    SC --> Report
+
+    style SC fill:#2563eb,color:#fff
